@@ -1,5 +1,5 @@
 #+STARTUP: overview
-#+TITLE: Example 
+#+TITLE: Scala part 2
 # make by default the result of a block its standard output
 #+PROPERTY: header-args         :results output
 # i like to be pedantic
@@ -14,7 +14,7 @@
 # in programming (specially _)
 #+PROPERTY: header-args:sql   :engine postgresql  :cmdline -h localhost -p 54321  imdb :colnames yes :results  table
 #+PROPERTY: header-args:python   :results output
-#+PROPERTY: header-args:scala    :results output
+#+PROPERTY: header-args:scala   :results output
 #+OPTIONS: ^:nil
 #
 #
@@ -27,6 +27,36 @@
 #
 # library of babel: maybe the answer is there:
 #  https://orgmode.org/worg/library-of-babel.html
+
+* Table of contents                                                     :TOC:
+- [[#functional-scala][Functional scala]]
+- [[#return-functions][Return functions]]
+- [[#currying][Currying]]
+- [[#map][map]]
+- [[#anonymous-functions][Anonymous functions]]
+- [[#cross-product][cross product]]
+- [[#join][join?]]
+- [[#comprehensions][Comprehensions]]
+- [[#pattern-matching][Pattern matching]]
+- [[#pattern-matching-1][pattern matching]]
+- [[#works-with-any-case-class-constructor][Works with any case class constructor]]
+- [[#always-specify-all-potential-matches][always specify all potential matches]]
+- [[#not-possible-to-use-it-with-regular-classesobjects][Not possible to use it with regular classes/objects]]
+- [[#lazy-evaluation][Lazy evaluation]]
+- [[#option][Option]]
+- [[#how-to-process-options][How to process options]]
+- [[#improved-exception-handling][Improved exception handling]]
+- [[#implicits][implicits:]]
+- [[#implicit-arguments][implicit arguments]]
+- [[#implicit-conversions][implicit conversions]]
+- [[#data-structures][Data structures]]
+- [[#immutable--data-structures][Immutable  data structures]]
+- [[#map-1][map]]
+- [[#filter][filter]]
+- [[#fold][fold]]
+- [[#cross-product-1][cross-product]]
+- [[#reduce][reduce]]
+- [[#iterators][Iterators]]
 
 * Functional scala
 
@@ -144,8 +174,8 @@ println(addTo5_again(200))
 
 * map
 
-- one of the most important functions
 - apply a function to an element of a collection
+- one of the most important methods of a collection
 
 #+begin_src scala :exports both
 def f(i:Int) = i * 10
@@ -329,3 +359,496 @@ ANd now the natural join between first element of tuples
 (the,the,29)
 (the,the,32)
 #+end_example
+
+
+* Pattern matching
+
+- break complex data structures into their basic components
+- create val bindings at the same time  
+
+#+begin_src scala :exports both
+val x = List(3,4,5,6)
+val y = 1::2::x
+
+println(y)
+
+println{y match {
+  case l => "it is a list:" + l.toString
+  case _ => "default"
+  }}
+
+println{y match {
+  case a::l => s"List with at least one element: $a and tail $l"
+  case l => "it is a list:" + l.toString
+  case _ => "default"
+  }}
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+List(1, 2, 3, 4, 5, 6)
+it is a list:List(1, 2, 3, 4, 5, 6)
+List with at least one element: 1 and tail List(2, 3, 4, 5, 6)
+#+end_example
+
+* pattern matching
+
+- every  case expression is a constructor
+- a case matches if the constructor can be used to build the match expression
+  - executed in order
+  - the right hand side of all case expressions should return the same type
+
+#+begin_src scala :exports both
+def whatIsIt(lst: List[Int]):String = {
+  lst match {
+    case List(_,_,_) => "I have 3 elements"
+    case List(a) => s"List of one element [$a]"
+    case List(_, 4) => s"List of two elements with second equal to 4: " + lst.toString
+    case head::tail => s"List with at least one element: [$head] and tail [$tail]"
+    case l => "it is a list:" + l.toString
+    case _ => "default"
+  }
+}
+
+println(whatIsIt(List(1,2,3)))
+println(whatIsIt(List(1)))
+println(whatIsIt(List(-1,4)))
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I have 3 elements
+List of one element [1]
+List of two elements with second equal to 4: List(-1, 4)
+#+end_example
+
+* Works with any case class constructor
+
+
+#+begin_src scala
+case class Person(name:String, age : Int)
+
+val p = Person("Ying", 23)
+
+println{
+  p match { // a readable and quick way to split the components of
+            // p into two val bindings n and a
+    case Person(n, a) => s"A person with name $n and age $a"
+    }
+  }
+
+// instead of
+println{
+  val n = p.name
+  val a = p.age
+  s"A person with name $n and age $a"
+}
+
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+A person with name Ying and age 23
+#+end_example
+
+* always specify all potential matches
+
+- In most cases, Scala is smart enough to realize when you are missing case expressions
+- And you will get a warning. Try compiling the code below
+  - if you run the code, you will get an exception (as below)
+
+#+begin_src scala :exports both
+def whatIsIt(lst: List[Int]) = {
+  lst match {
+    case List(_, 4) => s"List of two elements with second equal to 4: " + lst.toString
+  }
+}
+println(whatIsIt(List(-1,4)))
+println(whatIsIt(List(1,2,3)))
+
+#+end_src
+
+#+RESULTS:
+
+* Not possible to use it with regular classes/objects
+
+the code below does not work
+
+#+begin_src scala
+class Person(n:String, a : Int) {
+  val name = n
+  val age = a
+}
+
+class Student(n: String, a: Int, u: String) extends Person(n, a) {
+  val univ = u
+}
+
+val p = new Person("Kim", 20)
+val s = new Student("Ying", 23, "Uvic")
+
+p match {
+  case Person(n, a) => println(p) // this line does not compile
+  }
+
+#+end_src
+
+#+RESULTS:
+
+* Lazy evaluation
+
+- Evaluate when needed (or never)
+  - first use
+
+#+begin_src scala :exports both
+
+val x = {
+  println("Assigning x")
+  10
+}
+
+lazy val a = {
+  println("Assigning a")
+  3
+}
+
+lazy val b = {
+  println("Assigning b")
+  5
+}
+
+println(a + b)
+//println(a)
+//println(b)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Assigning x
+Assigning a
+Assigning b
+8
+#+end_example
+
+* Option
+
+- What do to with partial functions?
+  1.  throw an exception if called with a non-domain value
+  2. make them total (return "something" for any value in domain)
+
+- How do we make them total?
+  1. Return magic value (e.g. Null, -1, 42, etc)
+  2. Better: return an option that indicates
+     - None: if there is no return value
+     - some val: there is a return value, and it is val
+
+#+begin_src scala :exports both
+def head(lst: List[Int]) =
+  lst match {
+    case List() => None
+    case head::_ => Some(head)
+  }
+
+val x : Option[Int] = head(List(20))
+println(x)
+println(head(List()))
+println(head(List(1,2,3)))
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Some(20)
+None
+Some(1)
+#+end_example
+
+* How to process options
+
+#+begin_src scala :exports both
+def head(lst: List[Int]) =
+  lst match {
+    case List() => None
+    case head::_ => Some(head)
+  }
+
+def process_option(v : Option[Int]) =
+  v match {
+    case None => "There was nothing"
+    case Some(value) => s"There was a value [$value]"
+  }
+
+println(process_option(head(List())))
+      
+#+end_src
+
+#+RESULTS:
+#+begin_example
+There was nothing
+#+end_example
+
+
+* Improved exception handling 
+
+#+begin_src scala :exports both
+import scala.util.{Try, Success, Failure}
+
+def failIfNegative(i:Int):Int  =
+  if (i < 0)
+    throw new RuntimeException
+  else
+    i
+
+// this will throw an exception
+//val x = failIfNegative(-10)
+
+// This will not throw an exception
+val a = Try(failIfNegative(1))
+println(a)
+
+//this will throw an exception AND catch the exception
+val b = Try(failIfNegative(-10))
+println(b)
+
+println(b match {
+  case Success(good) => s"success $good"
+  case Failure(ex) => s"no good, no good: exception $ex"
+  })
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Success(1)
+Failure(java.lang.RuntimeException)
+no good, no good: exception java.lang.RuntimeException
+#+end_example
+
+
+* implicits:
+
+- this is where the black magic starts
+- makes the code hard to understand by newbies in the language
+  
+
+* implicit arguments
+
+#+begin_src scala :exports both
+def f(implicit i:Int) = i + 1
+implicit val someName = 2
+
+def h(implicit j:Int) = j * 10
+
+println(f(10))
+println(f) // use implicit argument
+println(h(10))
+println(h)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+11
+3
+100
+20
+#+end_example
+
+* implicit conversions
+
+- implicitly:
+  - create an object at run time
+  - call method
+  - destroy object
+
+#+begin_src scala :exports both
+implicit class myInteger(n:Int) {
+//  println("Hello world")
+  def inc() = n + 1
+  def dec() = n - 1 
+}
+println(3.inc) // new myInteger(3).inc()
+println(4.inc)
+println(4.dec)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+4
+5
+3
+#+end_example
+
+
+* Data structures
+
+- Very rich data structures
+- divided into two sets:
+  - immutable (default)
+  - mutable
+
+* Immutable  data structures
+
+- List
+- Stream
+- Vector
+- Stack/Queue/
+- Set
+  - HashSet (default)
+  - TreeSet
+- Map (dictionaries)
+  - HashMap (default
+  - TreeMap
+- BitSet (very space efficient set)
+- ListMap (very inefficient)      
+
+Different performance: choose as needed
+
+https://docs.scala-lang.org/overviews/collections/performance-characteristics.html
+
+
+* map
+
+This is the projection operation
+
+#+begin_src scala :exports both
+def f(x:Int) = (">" + x.toString + "<" ,x+1)
+
+val x = List(1,2,3,4).map(f)
+println(x)
+println(List(1,2,3,4).map(_*2))
+println(List(1,2,3,4).map(x => x+1))
+val m = Map("a"->1, "x"->2).map(x => (x._2 + 1, x._1 ))
+println(m)
+println(m(2))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+List((>1<,2), (>2<,3), (>3<,4), (>4<,5))
+List(2, 4, 6, 8)
+List(2, 3, 4, 5)
+Map(2 -> a, 3 -> x)
+a
+#+end_example
+
+* filter
+
+selection operation
+
+
+#+begin_src scala :exports both
+val l = List(1,2,3,4)
+val x = l.filter(_ => true)
+println(x)
+val y = l.filter(x=>x % 2 ==1)
+println(y)
+val z = l.filter(_ > 3)
+println(z)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+List(1, 2, 3, 4)
+List(1, 3)
+List(4)
+#+end_example
+
+* fold
+
+equivalent to a "manual" groupby: turn all collection into a single value
+
+#+begin_src scala :exports both
+val l = List(1,2,3,4)
+
+println( l.foldLeft(0)(_ + _))
+
+def add(acc:Int, x:Int) = acc + x
+
+println( l.foldLeft(1000)( add ))
+
+println( l.foldLeft(1)( (x,y) => x * y ))
+
+
+def concat(acc: List[Int], x:Int) = x::acc
+
+println( l.foldLeft(List[Int]())( concat ))
+
+def concat2(x:Int, acc: List[Int]) = x::acc
+
+println( l.foldRight(List[Int]())( concat2 ))
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+10
+1010
+24
+List(4, 3, 2, 1)
+List(1, 2, 3, 4)
+#+end_example
+
+* cross-product
+
+Use comprehension
+
+
+
+* reduce
+
+similar to fold, but the result of each iteration is the same as the type of the element
+
+#+begin_src scala :exports both
+val l = List(1,2,3,4)
+
+println( l.reduce(_ + _))
+
+println(l.reduce((x,y)=> x))
+println(l.reduce((x,y)=> y))
+println(l.reduceLeft((x,y)=> x))
+println(l.reduceRight((x,y)=> x))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+10
+1
+4
+1
+1
+#+end_example
+
+* Iterators
+
+- Iterators are collections that don't have a predetermined size
+  - they might be infinite
+- A file can be seen as a stream of bytes or lines
+  - specially if we read from a pipe
+  - we might not be able to "seek" back
+
+#+begin_src scala :exports both
+val s = Stream.from(1)
+val i = Iterator.from(1)
+val x = s.drop(100).take(5).toList
+val x2 = s.take(5).toList
+val y = i.drop(100).take(10).toList
+val z = i.take(5).toList
+println(x)
+println(x2)
+println(y)
+println(z)
+//i.size will run forever
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+List(101, 102, 103, 104, 105)
+List(1, 2, 3, 4, 5)
+List(101, 102, 103, 104, 105, 106, 107, 108, 109, 110)
+List(111, 112, 113, 114, 115)
+#+end_example
+

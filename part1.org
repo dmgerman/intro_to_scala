@@ -1,5 +1,5 @@
 #+STARTUP: overview
-#+TITLE: Week 3:  functional programming map/reduce
+#+TITLE: Intro to Scala
 # make by default the result of a block its standard output
 #+PROPERTY: header-args         :results output
 # i like to be pedantic
@@ -28,7 +28,36 @@
 # library of babel: maybe the answer is there:
 #  https://orgmode.org/worg/library-of-babel.html
 
-* Intro Scala
+* Table of contents                                                     :TOC:
+- [[#introduction][Introduction]]
+- [[#every--program-extends-app][Every  program extends App]]
+- [[#val-bindings][val bindings]]
+- [[#in-this-course-we-will-not-use-variables-no-mutable-bindings][In this course *we will not use variables* (no mutable bindings)]]
+- [[#types-are-optional][Types are optional]]
+- [[#string-interpolation][String interpolation]]
+- [[#a-program][A program]]
+- [[#blocks][blocks]]
+- [[#unit][unit]]
+- [[#if][if]]
+- [[#functions][functions]]
+- [[#recursion][recursion]]
+- [[#identifiers][identifiers]]
+- [[#classes-and-objects][classes and objects]]
+- [[#constructors-and-attributes][Constructors and Attributes]]
+- [[#abstract-classes-and-storage-modifiers][abstract classes and storage modifiers]]
+- [[#traits-really-mixins][traits (really mixins)]]
+- [[#overloading][overloading]]
+- [[#everything-in-scala-is-an-object][everything in scala is an object]]
+- [[#anonymous-classes][anonymous classes]]
+- [[#functions-whose-body-has-not-been-implemented-yet][functions whose body has not been implemented yet]]
+- [[#functions-with-unit-as-a-parameter][functions with unit as a parameter]]
+- [[#apply-method][Apply method]]
+- [[#case-classes][case classes]]
+- [[#exceptions][Exceptions]]
+- [[#generics][Generics]]
+- [[#immutability][Immutability]]
+
+* Introduction
 
 - scala runs in the JVM
 - full access to all JVM libraries
