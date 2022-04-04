@@ -1,5 +1,5 @@
 #+STARTUP: overview
-#+TITLE: Example 
+#+TITLE: Introduction to Scala 
 # make by default the result of a block its standard output
 #+PROPERTY: header-args         :results output
 # i like to be pedantic
@@ -16,15 +16,11 @@
 #+PROPERTY: header-args:python   :results output
 #+PROPERTY: header-args:scala    :results output
 #+OPTIONS: ^:nil
-#
-#
 # Documentation: https://orgmode.org/manual/index.html#Top
-#
 # Types of results: https://orgmode.org/manual/Results-of-Evaluation.html#Results-of-Evaluation
 #  :type  list, scalar,  verbatim, file, 
 #  :format code, drawer, html, latex, link, graphics,  org, pp, raw
 #  :exports code, both, results, none
-#
 # library of babel: maybe the answer is there:
 #  https://orgmode.org/worg/library-of-babel.html
 
