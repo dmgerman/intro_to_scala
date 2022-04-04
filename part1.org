@@ -1,0 +1,687 @@
+#+STARTUP: overview
+#+TITLE: Week 3:  functional programming map/reduce
+# make by default the result of a block its standard output
+#+PROPERTY: header-args         :results output
+# i like to be pedantic
+#+PROPERTY: header-args:C       :main no :flags -std=c99 -Wall --pedantic -Werror
+#  use C+++ instead of C++ (L+ means add arguments to language L)
+#+PROPERTY: header-args:C+++    :main no :flags -std=c++17 -Wall --pedantic -Werror
+# specify the default database
+# result:   guarantees the result is typeset as a table
+# colnames: orgmode does not insert column names, force it to do it
+#+PROPERTY: header-args:sqlite  :db /tmp/rip.db :colnames yes :results  table
+# make sure that ^ and _ do not get interpreted, since they are commonly used
+# in programming (specially _)
+#+PROPERTY: header-args:sql   :engine postgresql  :cmdline -h localhost -p 54321  imdb :colnames yes :results  table
+#+PROPERTY: header-args:python   :results output
+#+PROPERTY: header-args:scala    :results output
+#+OPTIONS: ^:nil
+#
+#
+# Documentation: https://orgmode.org/manual/index.html#Top
+#
+# Types of results: https://orgmode.org/manual/Results-of-Evaluation.html#Results-of-Evaluation
+#  :type  list, scalar,  verbatim, file, 
+#  :format code, drawer, html, latex, link, graphics,  org, pp, raw
+#  :exports code, both, results, none
+#
+# library of babel: maybe the answer is there:
+#  https://orgmode.org/worg/library-of-babel.html
+
+* Intro Scala
+
+- scala runs in the JVM
+- full access to all JVM libraries
+  - including java
+- strongly typed, functional language
+  - lots of advanced, extremely useful language features
+
+
+* Every  program extends App
+
+A singleton: object
+
+
+#+begin_src scala :exports both :results output
+object Basics extends App {
+  println("hello world")
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+hello world
+#+end_example
+
+- For the rest of this file, I'll simply write Scala statements.
+- Equivalent to using scala as scripting language
+
+* val bindings
+
+create immutable bindings (/variables/ that cannot be modified)
+
+#+begin_src scala :exports both 
+val x : Int =  10
+val st : String = "This is the end of the world"
+val flag : Boolean = true
+val c : Char = 'a'
+val y = 20
+
+println(x, st, flag, c, y)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+(10,This is the end of the world,true,a,20)
+#+end_example
+
+* In this course *we will not use variables* (no mutable bindings)
+
+Thus the keyword /var/ is forbidden:
+
+#+begin_src scala :exports both
+var x : Int = 10
+x = x + 1
+println(x)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+11
+#+end_example
+
+* Types are optional
+
+Scala inferres the type of an expression from its declaration expression
+
+#+begin_src scala :exports both
+// polymorphic function declaration
+// more on this later
+def typeOf[T](v:T) = v match {
+  case i : Int => "I am an integer of value " + i
+  case s: String => "I am a string [" + s + "]"
+  case _ => "I don't know what I am" 
+}
+
+val x = 10
+val y = "This is the end"
+
+val x: Int = "this"
+
+println(typeOf(x))
+println(typeOf(y))
+
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+I am an integer of value 10
+I am a string [This is the end]
+#+end_example
+
+* String interpolation
+
+#+begin_src scala :exports both
+val x = 10
+val f = 1.10
+println(s"x value $x\ny value ${f+2.0}")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+x value 10
+y value 3.1
+
+#+end_example
+
+* A program
+
+- A program in scala is a sequence of bindings and expressions
+- Some expressions have side effects (e.g. /print/, /println/ )
+- No control statements in the traditional sense
+
+#+begin_src scala :exports both
+val x = -1
+// if is an expression, not a control statement
+val y = 1 + (if (x > 2) 5 else - 5)
+println(y)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+-4
+#+end_example
+
+* blocks
+
+they are expressions. Result is last expression in code block
+
+#+begin_src scala :exports both
+val x = {
+  val a = 1
+  val b = 2
+  a + b
+  }
+
+println(x)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+3
+#+end_example
+
+* unit
+
+- The value ()  is of type unit
+- it represents nothing
+
+
+* if
+
+because if is an expression, both branches return a value
+
+#+begin_src scala :exports both
+val x = 0
+// if is an expression, not a control statement
+val y = if (x > 2) 5 
+println(y)
+// equivalent to 
+val z = if (x > 2) 5  else ()
+print(z)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+()
+()
+#+end_example
+
+
+* functions
+
+#+begin_src scala :exports both
+def f (x:Int, y:Int): Int =
+  x + y
+
+def g() : Unit = {
+  val y = println("hello world") // returns type unit, value ()
+  y
+}
+
+def h() : Unit =
+  println("hello again")
+
+println(f (1,2))
+println(g())
+println(h())
+#+end_src
+
+#+RESULTS:
+#+begin_example
+3
+hello world
+()
+hello again
+()
+#+end_example
+
+* recursion
+
+Recursion plays an important role in functional languages
+
+#+begin_src scala :exports both
+def factorial(n:BigInt) :BigInt =
+   if (n<=1)  // make sure it is a total function
+     1
+   else
+     n * factorial(n-1)
+
+println(factorial(100))
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000
+#+end_example
+
+* identifiers
+
+- almost any character
+  -  few exceptions:
+    - parenthesese, brackets, braces, period, quote, quotes, comma, semicolon
+
+#+begin_src scala :exports both
+val ? = true
+val ?! = false
+def | () = 5
+def a () = 4
+println(?)
+println(?!)
+println(|())
+println(a())
+println(a)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+true
+false
+5
+4
+4
+#+end_example
+
+
+* classes and objects
+
+#+begin_src scala :exports both
+class Vehicle
+
+val aVehicle = new Vehicle
+
+class Car extends Vehicle
+
+val aCar = new Car
+
+println(aVehicle)
+println(aCar)
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Main$$anon$1$Vehicle@3704122f
+Main$$anon$1$Car@3153ddfc
+#+end_example
+
+* Constructors and Attributes 
+
+- very easy to add attributes 
+- constructors are easy to implement
+- objects with only val attributes are immutable
+  - constructors set val attributes
+- subclasses are of subtypes of their superclass
+
+#+begin_src scala :exports both
+class Vehicle(val weight:Int) {
+  def move() = println(s"Vehicle of $weight kg is moving")
+}
+val aVehicle = new Vehicle (10)
+
+class Car(wheels:Int, w:Int) extends Vehicle(w) {
+
+  override def move() = {
+    super.move()
+    println(s"with $wheels wheels")
+    }
+}
+
+val aCar = new Car(4, 1800)
+
+aVehicle.move()
+aCar.move()
+
+val anotherVehicle: Vehicle = new Car(3, 700)
+anotherVehicle.move()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Vehicle of 10 kg is moving
+Vehicle of 1800 kg is moving
+with 4 wheels
+Vehicle of 700 kg is moving
+with 3 wheels
+#+end_example
+
+* abstract classes and storage modifiers
+
+- no need to provide implementations
+- no need for public
+- protected and private
+     - same meaning as in java
+
+#+begin_src scala :exports both
+abstract class Vehicle(val weight:Int) {
+  protected def move() 
+}
+// the following line would create an error
+// val aVehicle = new Vehicle (10)
+
+class Car(wheels:Int, w:Int) extends Vehicle(w) {
+
+  private def print_me() = {
+    println(s"Moving $weight kg. with $wheels wheels ")
+  }
+
+  override def move() = {
+    // we cannot/should not  call move in superclass
+    //    super.move()
+    print_me()
+  }
+}
+
+val aCar = new Car(4, 1800)
+aCar.move()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Moving 1800 kg. with 4 wheels 
+#+end_example
+
+* traits (really mixins)
+
+- Single class inheritance
+- A class can use multiple traits 
+- traits can have implementations
+
+#+begin_src scala :exports both
+trait Engine {
+  def description() = s"engine: ${fuel()} of ${power()} hps."
+  // no definition needed, but good idea to declare types
+  def power(): Float  // virtual
+  def fuel():String
+}
+
+abstract class Vehicle(val weight:Int) {
+  protected def move() 
+}
+// the following line would create an error
+// val aVehicle = new Vehicle (10)
+
+class Car(wheels:Int, w:Int, engineFuel:String, engineHp: Float) extends Vehicle(w) with Engine {
+
+  private def print_me() = {
+    println(s"Moving $weight kg. with $wheels wheels ")
+    println(s"   with engine: ${description()}")
+  }
+
+  override def move() = {
+    // we cannot/should not  call move in superclass
+    //    super.move()
+    print_me()
+  }
+  def power() = engineHp
+  def fuel() = engineFuel
+}
+
+val aCar = new Car(4, 1800, "Electric", 30)
+aCar.move()
+val gasCar = new Car(6, 2800, "Gasoline", 24)
+gasCar.move()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Moving 1800 kg. with 4 wheels 
+   with engine: engine: Electric of 30.0 hps.
+Moving 2800 kg. with 6 wheels 
+   with engine: engine: Gasoline of 24.0 hps.
+#+end_example
+
+* overloading
+
+#+begin_src scala :exports both
+class Vehicle(val weight:Int) {
+  def >() = println(s"Vehicle of $weight kg is moving")
+  def >(km:Int) = println(s"Vehicle of $weight kg is moving $km km")
+}
+
+val aV = new Vehicle(100)
+aV.>(4)
+
+aV > 10 // no need for . or parentheses if method only has one parameter
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Vehicle of 100 kg is moving 4 km
+Vehicle of 100 kg is moving 10 km
+#+end_example
+
+* everything in scala is an object
+
+#+begin_src scala :exports both
+println(3 + 2)
+println(3.+(2))
+println(3.getClass)
+"abc".getClass.getMethods.take(5).map(println)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+5
+5
+int
+public boolean java.lang.String.equals(java.lang.Object)
+public int java.lang.String.length()
+public java.lang.String java.lang.String.toString()
+public int java.lang.String.hashCode()
+public void java.lang.String.getChars(int,int,char[],int)
+#+end_example
+
+* anonymous classes
+
+- only useful when we want to create a singleton
+
+#+begin_src scala :exports both
+
+val point = new {
+     val x = 1.0
+     val y = 2.0
+  }
+println(point)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Main$$anon$1$$anon$2@1dfd5f51
+#+end_example
+
+* functions whose body has not been implemented yet
+
+??? means "not implemented yet"
+
+#+begin_src scala :exports both
+def f(i:Int):Int = ???
+
+def g(i:Int):Int =  i - 1
+
+println(g(5))
+// uncommenting next would generate an exception
+// scala.NotImplementedError: an implementation is missing
+//f(4)
+#+end_src
+
+#+RESULTS:
+
+* functions with unit as a parameter
+
+No need to pass parameter:
+
+#+begin_src scala :exports both
+def f():Int = 7
+
+println(f)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+7
+#+end_example
+
+subtle great feature:
+
+#+begin_src scala
+val f :Int = 7
+#+end_src
+
+is equivalent to:
+
+#+begin_src scala
+def f(): Int = 7
+#+end_src
+
+User of f does not need to know if *f* is a *function* or a *value*
+
+* Apply method
+
+- make *objects* behave *like functions*!!!
+- can take any arguments
+  - syntactic sugar for () operator 
+
+#+begin_src scala :exports both
+class C {
+  def apply(x:Int): Int =  x + 1
+}
+val c = new C
+// the following two lines are equivalent
+println(c.apply(10))
+println(c(10))
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+11
+11
+#+end_example
+
+* case classes
+
+- lightweight method to *create types*
+  - similar to datatypes in sml
+- like /records/ but *more powerful*
+- creates method equal and hash
+  - ability to compare objects based on attributes alone
+
+#+begin_src scala :exports both
+class PersonClass (firstname : String, lastName: String)
+
+val kim = new PersonClass("Ji-soo", "Kim")
+val kim2 = new PersonClass("Ji-soo", "Kim")
+println(kim)
+println(kim2)
+println(kim==kim2)
+
+case class Person(firstname : String, lastName: String)
+
+def print(p:Person) = {
+  match p of
+  Person(fist, last) => println("firstname", first, "lastname", last)
+  }
+
+val joe = Person("Joe", "Smith")
+val joe2 = Person("Joe", "Smith")
+
+println(joe)
+println(joe2)
+println(joe==joe2)
+#+end_src  
+
+#+RESULTS:
+#+begin_example
+Main$$anon$1$PersonClass@4b1abd11
+Main$$anon$1$PersonClass@3f36b447
+false
+Person(Joe,Smith)
+Person(Joe,Smith)
+true
+#+end_example
+
+* Exceptions
+
+try/catch are
+
+they are expressions
+
+#+begin_src scala :exports both
+println(
+  try {
+    val x = 1/0
+  } catch  {
+    case e: Exception => -42.0
+  } finally {
+    println("Some side effect. use with care")
+  }
+)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Some side effect. use with care
+-42.0
+#+end_example
+
+* Generics
+
+Ability to create classes and functions with parameters as types
+
+#+begin_src scala :exports both
+class Thing[T](att : T)  {
+  def contents () : T = att
+}
+
+val a = new Thing[Int](5)
+val b = new Thing[String]("abc")
+
+println(a.contents)
+println(a.getClass, a.contents.getClass)
+println(b.getClass, b.contents.getClass)
+
+// data structures in scala use generics
+// and define apply method: List.apply(1,2,3,4)
+val l : List[Float] = List(1,2,3,4)
+println(l)
+val sl : List[String] = List("this", "is", "the", "end")
+println(sl)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+5
+(class Main$$anon$1$Thing,int)
+(class Main$$anon$1$Thing,class java.lang.String)
+List(1.0, 2.0, 3.0, 4.0)
+List(this, is, the, end)
+#+end_example
+
+* Immutability
+
+- Scala programmers (and our course) strive to use only *immutable objects*
+- this means that the state of an object can never change
+- typical mutation operations would return a new object
+  - eg. list.reverse
+
+This is python:
+
+#+begin_src python :exports both
+l = [1,2,3,4]
+l.reverse()
+print(l)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+[4, 3, 2, 1]
+#+end_example
+
+This is scala:
+
+#+begin_src scala :exports both
+val l = List(1,2,3,4)
+val r = l.reverse
+println(l)
+println(r)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+List(1, 2, 3, 4)
+List(4, 3, 2, 1)
+#+end_example

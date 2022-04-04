@@ -1,0 +1,331 @@
+#+STARTUP: overview
+#+TITLE: Example 
+# make by default the result of a block its standard output
+#+PROPERTY: header-args         :results output
+# i like to be pedantic
+#+PROPERTY: header-args:C       :main no :flags -std=c99 -Wall --pedantic -Werror
+#  use C+++ instead of C++ (L+ means add arguments to language L)
+#+PROPERTY: header-args:C+++    :main no :flags -std=c++17 -Wall --pedantic -Werror
+# specify the default database
+# result:   guarantees the result is typeset as a table
+# colnames: orgmode does not insert column names, force it to do it
+#+PROPERTY: header-args:sqlite  :db /tmp/rip.db :colnames yes :results  table
+# make sure that ^ and _ do not get interpreted, since they are commonly used
+# in programming (specially _)
+#+PROPERTY: header-args:sql   :engine postgresql  :cmdline -h localhost -p 54321  imdb :colnames yes :results  table
+#+PROPERTY: header-args:python   :results output
+#+PROPERTY: header-args:scala    :results output
+#+OPTIONS: ^:nil
+#
+#
+# Documentation: https://orgmode.org/manual/index.html#Top
+#
+# Types of results: https://orgmode.org/manual/Results-of-Evaluation.html#Results-of-Evaluation
+#  :type  list, scalar,  verbatim, file, 
+#  :format code, drawer, html, latex, link, graphics,  org, pp, raw
+#  :exports code, both, results, none
+#
+# library of babel: maybe the answer is there:
+#  https://orgmode.org/worg/library-of-babel.html
+
+* Functional scala
+
+Functions are first class citizens
+
+#+begin_src scala :exports both
+def perform(i:Int, f : Int=>Unit) =
+  f(i)
+
+def myprint(i:Int) {
+  println(">>This is my print:")
+  println("   " + i.toString)
+}
+
+perform(5, println)  
+perform(5, myprint)  
+#+end_src
+
+#+RESULTS:
+#+begin_example
+5
+>>This is my print:
+   5
+#+end_example
+
+functions are values
+
+#+begin_src scala :exports both
+val perform = (i: Int, f:Int=>Unit) =>
+  f(i)
+
+val myprint = (i:Int) => {
+  println(">>This is my print:")
+  println("   " + i.toString)
+}
+
+perform(5, println)  
+perform(5, myprint)  
+#+end_src
+
+#+RESULTS:
+#+begin_example
+5
+>>This is my print:
+   5
+#+end_example
+
+* Return functions
+
+#+begin_src scala :exports both
+def f(i:Int) = 10 *i
+
+def h() : (Int=>Int) = {
+  // return a function that takes an int and returns and int
+  val x: Int=>Int = f
+  x
+}
+
+val k = h()
+
+println(k(10))
+// return a function that
+// adds its i to the parameter of the function
+def add_x(i:Int) =
+  (j:Int) => i+j
+
+val xx = add_x (5)
+
+val add_5 = add_x(5)
+
+println(add_5(10))
+println(add_5(1))
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+100
+15
+6
+#+end_example
+
+* Currying
+
+- partial application 
+  - returns a function when providing only some parameters
+
+#+begin_src scala :exports both
+def add (x:Int) (y:Int) =
+  x + y
+
+println((add(5)(10))) // both parameters, work as usual
+
+// need to declare type, so scala does not think i am doing something
+// stupid
+val addTo5:Int=>Int = add(5)
+// or using the (_) notation
+val addTo5_again = add(5)(_)
+
+println(addTo5(3))
+println(addTo5(10))
+println(addTo5_again(200))
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+15
+8
+15
+205
+#+end_example
+
+
+
+* map
+
+- one of the most important functions
+- apply a function to an element of a collection
+
+#+begin_src scala :exports both
+def f(i:Int) = i * 10
+val lst = List(1,2,3)
+val lst2 = lst.map(f)
+println(lst)
+println(lst2)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+List(1, 2, 3)
+List(10, 20, 30)
+#+end_example
+
+* Anonymous functions
+
+#+begin_src scala :exports both
+// we can define a function in 2 ways
+def f1(i:Int) = i * 10
+val f2: Int=>Int = (i:Int) => i * 10
+
+println(f1(5))
+println(f2(5))
+// but i can also treat the function body as an expression
+println( (
+            (i:Int) => i * 10 // same body as f2
+         )(5)  // invoke th efunction
+        )
+#+end_src
+
+#+RESULTS:
+#+begin_example
+50
+50
+50
+#+end_example
+
+with map
+
+#+begin_src scala :exports both
+println(List(1,2,3).map( (i:Int) => i * 10))
+// but type inference means Scala already knows the type of i
+println(List(1,2,3,4,5).map( i => i * 10))
+// and since it is only one element, we have syntactic sugar
+println(List(-1,-2,-3).map( _ * 10))
+#+end_src
+
+#+RESULTS:
+
+Other higher order functions
+
+- filter: keep only those that the predicate is true
+- flatMap: map each element of the list, flatten the return lists into a single one
+- take(n): keep only the first n elements
+
+#+begin_src scala :exports both
+val l = List(1,2,3,4)
+println(l.take(2))
+
+println(l.filter(_ > 2))
+// but type inference means Scala already knows the type of i
+
+def f(i:Int) = List(i, i+1, i+2, i+3)
+
+println(l.map(f))
+println(l map f)
+
+println(l.flatMap(f))
+println(l flatMap f filter (_ > 5))
+
+// alternative syntax
+println {
+  l flatMap {
+    f
+  } filter  { i =>
+    i > 5
+  }
+}
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+List(1, 2)
+List(3, 4)
+List(List(1, 2, 3, 4), List(2, 3, 4, 5), List(3, 4, 5, 6), List(4, 5, 6, 7))
+List(List(1, 2, 3, 4), List(2, 3, 4, 5), List(3, 4, 5, 6), List(4, 5, 6, 7))
+List(1, 2, 3, 4, 2, 3, 4, 5, 3, 4, 5, 6, 4, 5, 6, 7)
+List(6, 6, 7)
+List(6, 6, 7)
+#+end_example
+
+* cross product
+
+- for each element x of list 1
+  - create a list where
+    - for each element y of list 2
+      - create a pair (x,y)
+- the result is a lists of lists
+- then flatten these lists
+
+#+begin_src scala :exports both
+val l1 = List(1,2,3)
+val l2 = List("this", "is", "the", "sea")
+// do the cross product of l1 and l2
+println(l1.flatMap(x=> l2.map( y=> (x,y))))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+List((1,this), (1,is), (1,the), (1,sea), (2,this), (2,is), (2,the), (2,sea), (3,this), (3,is), (3,the), (3,sea))
+#+end_example
+
+* join?
+
+#+begin_src scala :exports both
+// let us create two lists of pairs (tuples of size 2)
+val l1 = List("this", "is", "the", "sea").zipWithIndex
+val l2 = List("this", "is", "not", "the", "end", "of", "the", "world").
+  zip(List(100, 42, 8, 29, 42, 12, 32, 29))
+
+println(l1)
+println(l2)
+// do the cross product of l1 and l2
+println("ANd now the natural join between first element of tuples ")
+
+val l3 = l1.flatMap{ // do cross product
+              x=> l2.map((x,_))
+            }.filter {  // selection
+              case (a,b) => a._1 == b._1
+            }.map {     // project the values
+              case (a,b) => (a._1, a._2, b._2)
+            }
+
+l3.foreach(println)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+List((this,0), (is,1), (the,2), (sea,3))
+List((this,100), (is,42), (not,8), (the,29), (end,42), (of,12), (the,32), (world,29))
+ANd now the natural join between first element of tuples 
+(this,0,100)
+(is,1,42)
+(the,2,29)
+(the,2,32)
+#+end_example
+
+* Comprehensions
+
+Syntantic sugar for the join operation
+
+#+begin_src scala :exports both
+val l1 = List("this", "is", "the", "sea").zipWithIndex
+val l2 = List("this", "is", "not", "the", "end", "of", "the", "world").
+  zip(List(100, 42, 8, 29, 42, 12, 32, 29))
+
+println(l1)
+println(l2)
+// do the cross product of l1 and l2
+println("ANd now the natural join between first element of tuples ")
+
+// this is a bit more readable: all operations in a single operation: comprehension
+val l3 = for {
+     a <- l1                  // cross product
+     b <- l2                
+     if a._1 == b._1          // selection
+  } yield (a._1, b._1, b._2)  // projection
+
+l3.foreach(println)
+#+end_src
+
+#+RESULTS:
+#+begin_example
+List((this,0), (is,1), (the,2), (sea,3))
+List((this,100), (is,42), (not,8), (the,29), (end,42), (of,12), (the,32), (world,29))
+ANd now the natural join between first element of tuples 
+(this,this,100)
+(is,is,42)
+(the,the,29)
+(the,the,32)
+#+end_example
